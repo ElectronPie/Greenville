@@ -1,4 +1,4 @@
-import { Scene } from 'phaser';
+import * as Phaser from 'phaser';
 
 class Menu
 {
@@ -42,7 +42,7 @@ function createButtons(scene: Phaser.Scene, data: {text: string, onClick: Functi
     return result;
 }
 
-export class Game extends Scene
+export class Game extends Phaser.Scene
 {
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
@@ -63,6 +63,20 @@ export class Game extends Scene
             menu_blur: menu_blur,
             btns: btns,
         };
+
+        this.time.delayedCall(100, () => {
+            this.menu.btns.forEach((btnContainer) => {
+                // Ищем внутри контейнера объект типа Text
+                const label = btnContainer.list.find(
+                    (child) => child instanceof Phaser.GameObjects.Text
+                ) as Phaser.GameObjects.Text;
+
+                // Если нашли — обновляем текстуру
+                if (label) {
+                    label.updateText();
+                }
+            });
+        });
 
         // this.input.once('pointerdown', () => {
         //     this.scene.start('GameOver');
