@@ -42,12 +42,46 @@ function createButtons(scene: Phaser.Scene, data: {text: string, onClick: Functi
     return result;
 }
 
+function exitMenu(scene: Game) {
+    // if (menu.btns.length === 0 || menu.btns[0].alpha === 0) return;
+
+    //menu.btns[0].setInteractive(false);
+
+    // Анимация блюра
+    scene.tweens.add({
+        targets: scene.menuBlur,
+        strength: 0, 
+        duration: 2000,
+        ease: 'Linear'
+    });
+
+    // Анимация кнопок
+    scene.tweens.add({
+        targets: scene.uiLayer.list,
+        alpha: 0,
+        duration: 1000,
+        ease: 'Linear',
+        onComplete: () => {
+            // Уничтожаем кнопки и очищаем UI-слой
+            scene.uiLayer.list.forEach((child: any) => child.destroy());
+            //scene.uiLayer.clear(true, true); // true, true = удалить всех детей и очистить массив
+            
+            // На всякий случай отключаем вторую камеру, она больше не нужна
+            // scene.uiCamera.setVisible(false);
+        }
+    });
+}
+
 export class Game extends Phaser.Scene
 {
+    gameLayer!: Phaser.GameObjects.Layer;
+    uiLayer!: Phaser.GameObjects.Layer;
+    gameCamera!: Phaser.Cameras.Scene2D.Camera;
+    uiCamera!: Phaser.Cameras.Scene2D.Camera;
+    menuBlur: Phaser.Filters.Blur;
     camera: Phaser.Cameras.Scene2D.Camera;
     background: Phaser.GameObjects.Image;
-    menu: Menu
-    msg_new_game : Phaser.GameObjects.Text;
+    menu: Menu;
 
     constructor ()
     {
@@ -56,11 +90,50 @@ export class Game extends Phaser.Scene
 
     create ()
     {
-        this.background = this.add.image(320, 180, 'background').enableFilters();
-        const menu_blur = this.background.filters!.external.addBlur(1, 2, 2, 0.5);
-        const btns = createButtons(this, [{text: 'Новая игра', onClick: () => {}}]);
+        this.gameCamera = this.cameras.main;
+        this.uiCamera = this.cameras.add(0, 0, 640, 360); // Размеры вашей игры
+        
+        // 1. Создаем два слоя для порядка: мир и UI
+        this.gameLayer = this.add.layer();
+        this.uiLayer = this.add.layer();
+
+        // 2. Настраиваем главную камеру (она станет нашей gameCamera)
+        
+        this.background = this.add.image(320, 180, 'background');
+        this.gameLayer.add(this.background);
+
+        // 3. Создаем вторую камеру для UI (кнопок)
+        
+
+        // 4. Распределяем, что какая камера должна игнорировать
+        // gameCamera не должна видеть элементы UI
+        this.gameCamera.ignore(this.uiLayer);
+        // uiCamera не должна видеть игровой мир
+        this.uiCamera.ignore(this.gameLayer);
+
+
+        // 1. Создаем слой
+        // this.gameLayer = this.add.layer();
+
+        // // 2. Создаем фон и добавляем его в слой
+        // this.background = this.add.image(320, 180, 'background').enableFilters();
+        // this.gameLayer.add(this.background);
+
+        // // 4. Включаем фильтры ДЛЯ СЛОЯ и накладываем блюр
+        // this.gameLayer.enableFilters();
+        // const menu_blur = this.gameLayer.filters!.external.addBlur(1, 2, 2, 0.5);
+
+        // 5. Добавляем кнопки в uiLayer
+        const btns = createButtons(this, [{text: 'Новая игра', onClick: () => exitMenu(this)}]);
+        btns.forEach(btn => this.uiLayer.add(btn));
+
+        // 6. Применяем фильтр размытия ТОЛЬКО к gameCamera
+        // Фильтры на камерах в Phaser 4 включены по умолчанию[reference:2]
+        const blur = this.gameCamera.filters.external.addBlur(1, 2);
+        this.menuBlur = blur;
+
         this.menu = {
-            menu_blur: menu_blur,
+            menu_blur: this.menuBlur,
             btns: btns,
         };
 
