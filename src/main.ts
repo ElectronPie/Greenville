@@ -1,9 +1,7 @@
-import Phaser from 'phaser';
-import { gameConfig } from './game/config';
-import { BootScene } from './game/scenes/BootScene.ts'; // Пример сцены
+import StartGame from './game/main';
 
-// Добавляем сцены в конфиг
-gameConfig.scene = [BootScene];
+document.addEventListener('DOMContentLoaded', () => {
 
-// Создаем игру
-new Phaser.Game(gameConfig);
+    StartGame('game-container');
+
+});
