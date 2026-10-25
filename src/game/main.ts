@@ -32,7 +32,19 @@ const config: Phaser.Types.Core.GameConfig = {
 
 const StartGame = (parent: string) => {
 
-    return new Game({ ...config, parent });
+    const fonts = [
+        '8px "Press Start 2P"',
+        '16px "Roboto"',
+        '700 16px "Roboto"',   // bold is a separate load
+        'italic 16px "Lora"'
+    ];
+    
+    return Promise.all(fonts.map((font) => document.fonts.load(font)))
+        .then(() => {
+            document.fonts.ready.then(
+                () => new Game({ ...config, parent })
+            )
+        });
 
 }
 
