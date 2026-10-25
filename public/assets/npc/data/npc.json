@@ -1,0 +1,22 @@
+{
+    "doctor": {
+        "smallImage": "npc_doctor_small",
+        "closeUpImage": "npc_doctor_big",
+        "diagnosis": "Острая паранойя",
+        "dialogue": [
+            "Здравствуйте, пациент.",
+            "Вам кажется, что за вами следят пиксели?",
+            "Это нормально для нашего мира."
+        ]
+    },
+    "patient": {
+        "smallImage": "npc_patient_small",
+        "closeUpImage": "npc_patient_big",
+        "diagnosis": "Амнезия",
+        "dialogue": [
+            "Где я?",
+            "Кто вы такой?",
+            "Почему всё размыто?"
+        ]
+    }
+}

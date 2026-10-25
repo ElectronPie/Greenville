@@ -34,7 +34,8 @@ export class Preloader extends Scene
         //  Load the assets for the game - Replace with your own assets
         this.load.setPath('assets');
 
-        this.load.image('logo', 'logo.png');
+        this.load.json('npcsData', 'assets/data/npcs.json');
+        this.load.json('npcList', 'assets/data/npc_list.json');
 
         this.load.font('"Press Start 2P"')
         this.load.spritesheet('button', 'button.png', {frameWidth: 66, frameHeight: 16});
