@@ -158,8 +158,69 @@ export function removeNPC(
     return Promise.resolve();
 }
 
+function createInteractiveObject(scene: Game, x: number, y: number, texture: string, id: string, onClick: Function): Phaser.GameObjects.Image {
+    const obj = scene.add.image(x, y, texture);
+    
+    // Делаем объект полностью прозрачным при создании
+    obj.setAlpha(0.001); 
+
+    // Делаем объект кликабельным и меняем курсор на "руку"
+    obj.setInteractive({ useHandCursor: true });
+
+    // Эффект при наведении: плавно проявляем
+    obj.on('pointerover', () => {
+        if (!(scene as any).isGameStarted) return;
+        scene.tweens.add({
+            targets: obj,
+            alpha: 1,      // Проявляем до 100%
+            duration: 200, // За 200 мс (0.2 сек)
+            ease: 'Power2'
+        });
+    });
+
+    // Эффект при уходе курсора: плавно скрываем
+    obj.on('pointerout', () => {
+        if (!(scene as any).isGameStarted) return;
+        scene.tweens.add({
+            targets: obj,
+            alpha: 0.001,      // Скрываем обратно
+            duration: 200,
+            ease: 'Power2'
+        });
+    });
+
+    // Действие при клике
+    obj.on('pointerdown', () => {
+        if (!(scene as any).isGameStarted) return;
+
+        scene.actionId = id;
+        scene.time.delayedCall(2, () => {scene.pendingInteraction = onClick;})
+
+        scene.targetX = obj.x;
+
+        // Анимация легкого нажатия
+        scene.tweens.add({
+            targets: obj,
+            scale: 0.999,
+            yoyo: true,
+            duration: 100,
+            //onComplete: () => onClick()
+        });
+    });
+
+    return obj;
+}
+
+function openBook(): void {};
+
+function rest(): void {};
+
+function apointment(): void {};
+
 export class Game extends Phaser.Scene
 {
+    actionId: string | null = null;
+    pendingInteraction: Function | null = null;
     gameLayer!: Phaser.GameObjects.Layer;
     uiLayer!: Phaser.GameObjects.Layer;
     gameCamera!: Phaser.Cameras.Scene2D.Camera;
@@ -206,6 +267,18 @@ export class Game extends Phaser.Scene
         this.targetX = this.hero.x; 
         // this.hero.setScale(2.5);
 
+        const book = createInteractiveObject(this, 66, 258, 'book_outline', 'book', () => {
+            openBook();
+        });
+
+        const couch = createInteractiveObject(this, 190, 295, 'k_outline', 'couch', () => {
+            apointment();
+        });
+
+        const bed = createInteractiveObject(this, 578, 290, 'bed_outline', 'bed', () => {
+            rest();
+        });
+
 
 
         // 1. Создаем камеры
@@ -221,6 +294,9 @@ export class Game extends Phaser.Scene
         this.gameLayer.add(this.background);
         const fire = createAnimatedObject(this, 462, 285, 'fire_anim');
         this.gameLayer.add(fire);
+        this.gameLayer.add(bed);
+        this.gameLayer.add(couch);
+        this.gameLayer.add(book);
         this.gameLayer.add(this.hero);
 
         // 4. Распределяем, что какая камера должна игнорировать
@@ -264,6 +340,11 @@ export class Game extends Phaser.Scene
             if (pointer.x < this.scale.width && pointer.y > this.scale.height / 2) {
                 // Ограничиваем клик краями экрана (чтобы не ушел за экран)
                 this.targetX = Phaser.Math.Clamp(pointer.x, 16, this.scale.width - 16);
+
+                // ВАЖНО: Отменяем запланированное взаимодействие, 
+                // так как игрок кликнул мимо объекта
+                this.actionId = null;
+                this.pendingInteraction = null;
             }
         })
     }
@@ -309,6 +390,13 @@ export class Game extends Phaser.Scene
                 this.hero.stop();
                 this.hero.setFrame(0);
             }
+
+            // Выполняем функцию
+            if (this.pendingInteraction != null) { this.pendingInteraction(); }
+            
+            // ОЧИЩАЕМ СОСТОЯНИЕ, чтобы не выполнить действие повторно
+            this.actionId = null;
+            this.pendingInteraction = null;
         }
 
         // 4. РУЧНАЯ КОЛЛИЗИЯ С КРАЯМИ ЭКРАНА

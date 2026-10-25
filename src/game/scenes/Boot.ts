@@ -23,6 +23,10 @@ export class Boot extends Scene
             frameWidth: 48, 
             frameHeight: 98
         });
+
+        this.load.image('book_outline', 'assets/book-outline.png');
+        this.load.image('k_outline', 'assets/kushetka-outline.png');
+        this.load.image('bed_outline', 'assets/bed-outline.png');
     }
 
     create ()
