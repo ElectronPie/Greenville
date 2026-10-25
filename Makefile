@@ -3,7 +3,7 @@
 
 IMAGE_NAME := greenville
 CONTAINER_NAME := greenville
-PORT := 8080
+PORT := 80
 
 build:
 	docker build -t $(IMAGE_NAME) .

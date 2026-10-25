@@ -1,9 +1,64 @@
 import * as Phaser from 'phaser';
 
+class Tablet
+{
+    scene: Phaser.Scene
+    containerObject: Phaser.GameObjects.Container;
+    tabletImage: Phaser.GameObjects.Image;
+    tab1: Phaser.GameObjects.Image;
+    tab2: Phaser.GameObjects.Image;
+    tab3: Phaser.GameObjects.Image;
+    currentTween?: Phaser.Tweens.Tween
+
+    constructor (scene: Phaser.Scene) {
+        this.scene = scene
+        this.tabletImage = scene.add.image(320, 180, 'tablet');
+        this.tab1 = scene.add.image(410, 16, 'tab1');
+        this.tab2 = scene.add.image(492, 16, 'tab1');
+        this.tab3 = scene.add.image(582, 18, 'tab3');
+        this.containerObject = scene.add.container(0, 0, [this.tabletImage, this.tab1, this.tab2, this.tab3]);
+    }
+
+    hide () {
+        this.currentTween?.destroy();
+
+        this.containerObject.y = 0
+
+        this.currentTween = this.scene.add.tween({
+            targets: this.containerObject,
+            y: 360,
+            ease: 'Expo.easeIn',
+            duration: 1000,
+            repeat: 0,
+            yoyo: false,
+        });
+
+        return this.currentTween;
+    }
+
+    show () {
+        this.currentTween?.destroy();
+
+        this.containerObject.y = 320
+
+        this.scene.add.tween({
+            targets: this.containerObject,
+            y: 0,
+            ease: 'Expo.easeOut',
+            duration: 1000,
+            repeat: 0,
+            yoyo: false,
+        });
+
+        return this.currentTween;
+    }
+};
+
 class Menu
 {
     menu_blur: Phaser.Filters.Blur;
-    btns: Phaser.GameObjects.Container[];
+    btns?: Phaser.GameObjects.Container[];
+    tablet?: Tablet;
 };
 
 function createButton(scene: Phaser.Scene, x: number, y: number, text: string, onClick: Function): Phaser.GameObjects.Container {
@@ -50,7 +105,7 @@ function exitMenu(scene: Game) {
     // Анимация блюра
     scene.tweens.add({
         targets: scene.menuBlur,
-        strength: 0, 
+        strength: 0,
         duration: 2000,
         ease: 'Linear'
     });
@@ -65,9 +120,12 @@ function exitMenu(scene: Game) {
             // Уничтожаем кнопки и очищаем UI-слой
             scene.uiLayer.list.forEach((child: any) => child.destroy());
             //scene.uiLayer.clear(true, true); // true, true = удалить всех детей и очистить массив
-            
+
             // На всякий случай отключаем вторую камеру, она больше не нужна
-            // scene.uiCamera.setVisible(false);
+            scene.uiCamera.setVisible(false);
+
+            scene.menu.tablet = new Tablet(scene);
+            scene.menu.tablet!.show();
         }
     });
 }
@@ -106,12 +164,10 @@ export class Game extends Phaser.Scene
             });
         }
 
-
-
         // 1. Создаем камеры
         this.gameCamera = this.cameras.main;
         this.uiCamera = this.cameras.add(0, 0, 640, 360); // Размеры вашей игры
-        
+
         // 2. Создаем два слоя для порядка: мир и UI
         this.gameLayer = this.add.layer();
         this.uiLayer = this.add.layer();
@@ -143,7 +199,7 @@ export class Game extends Phaser.Scene
         };
 
         this.time.delayedCall(100, () => {
-            this.menu.btns.forEach((btnContainer) => {
+            this.menu.btns?.forEach((btnContainer) => {
                 // Ищем внутри контейнера объект типа Text
                 const label = btnContainer.list.find(
                     (child) => child instanceof Phaser.GameObjects.Text

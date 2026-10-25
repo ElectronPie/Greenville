@@ -38,6 +38,9 @@ export class Preloader extends Scene
 
         this.load.font('"Press Start 2P"')
         this.load.spritesheet('button', 'button.png', {frameWidth: 66, frameHeight: 16});
+        this.load.image('tablet', 'Patient-UI-Details.png');
+        this.load.image('tab1', 'tab1.png');
+        this.load.image('tab3', 'tab3.png');
     }
 
     create ()
