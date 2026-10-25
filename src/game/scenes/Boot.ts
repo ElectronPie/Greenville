@@ -18,6 +18,11 @@ export class Boot extends Scene
             frameWidth: 26, 
             frameHeight: 22 
         });
+
+        this.load.spritesheet('hero', 'assets/kostya.png', { 
+            frameWidth: 48, 
+            frameHeight: 98
+        });
     }
 
     create ()
