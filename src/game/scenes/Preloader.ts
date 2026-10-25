@@ -39,13 +39,15 @@ export class Preloader extends Scene
 
         this.load.font('"Press Start 2P"')
         this.load.spritesheet('button', 'button.png', {frameWidth: 66, frameHeight: 16});
+        this.load.image('tablet', 'Patient-UI-Details.png');
+        this.load.image('tab1', 'tab1.png');
+        this.load.image('tab3', 'tab3.png');
     }
 
     create ()
     {
         //  When all the assets have loaded, it's often worth creating global objects here that the rest of the game can use.
         //  For example, you can define global animations here, so we can use them in other scenes.
-
 
         //  Move to the MainMenu. You could also swap this for a Scene Transition, such as a camera fade.
         this.scene.start('Game');

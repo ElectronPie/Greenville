@@ -2,10 +2,65 @@ import * as Phaser from 'phaser';
 import { NPC } from '../npc';
 import { INPCData } from '../npc';
 
+class Tablet
+{
+    scene: Phaser.Scene
+    containerObject: Phaser.GameObjects.Container;
+    tabletImage: Phaser.GameObjects.Image;
+    tab1: Phaser.GameObjects.Image;
+    tab2: Phaser.GameObjects.Image;
+    tab3: Phaser.GameObjects.Image;
+    currentTween?: Phaser.Tweens.Tween
+
+    constructor (scene: Phaser.Scene) {
+        this.scene = scene
+        this.tabletImage = scene.add.image(320, 180, 'tablet');
+        this.tab1 = scene.add.image(410, 16, 'tab1');
+        this.tab2 = scene.add.image(492, 16, 'tab1');
+        this.tab3 = scene.add.image(582, 18, 'tab3');
+        this.containerObject = scene.add.container(0, 360, [this.tabletImage, this.tab1, this.tab2, this.tab3]);
+    }
+
+    hide () {
+        this.currentTween?.destroy();
+
+        this.containerObject.y = 0
+
+        this.currentTween = this.scene.add.tween({
+            targets: this.containerObject,
+            y: 360,
+            ease: 'Expo.easeIn',
+            duration: 1000,
+            repeat: 0,
+            yoyo: false,
+        });
+
+        return this.currentTween;
+    }
+
+    show () {
+        this.currentTween?.destroy();
+
+        this.containerObject.y = 320
+
+        this.scene.add.tween({
+            targets: this.containerObject,
+            y: 0,
+            ease: 'Expo.easeOut',
+            duration: 1000,
+            repeat: 0,
+            yoyo: false,
+        });
+
+        return this.currentTween;
+    }
+};
+
 class Menu
 {
     menu_blur: Phaser.Filters.Blur;
-    btns: Phaser.GameObjects.Container[];
+    btns?: Phaser.GameObjects.Container[];
+    tablet?: Tablet;
 };
 
 function createButton(scene: Phaser.Scene, x: number, y: number, text: string, onClick: Function): Phaser.GameObjects.Container {
@@ -52,7 +107,7 @@ function exitMenu(scene: Game) {
     // Анимация блюра
     scene.tweens.add({
         targets: scene.menuBlur,
-        strength: 0, 
+        strength: 0,
         duration: 2000,
         ease: 'Linear'
     });
@@ -67,9 +122,12 @@ function exitMenu(scene: Game) {
             // Уничтожаем кнопки и очищаем UI-слой
             scene.uiLayer.list.forEach((child: any) => child.destroy());
             //scene.uiLayer.clear(true, true); // true, true = удалить всех детей и очистить массив
-            
+
             // На всякий случай отключаем вторую камеру, она больше не нужна
-            // scene.uiCamera.setVisible(false);
+            scene.uiCamera.setVisible(false);
+
+            scene.menu.tablet = new Tablet(scene);
+            // scene.menu.tablet!.show();
         }
     });
 
@@ -85,21 +143,21 @@ function createAnimatedObject(scene: Phaser.Scene, x: number, y: number, animKey
 // Функция для управления затемнением
 // scene - ваша сцена Game, config - настройки (цвет, прозрачность, время)
 export function toggleDarkening(
-    scene: Phaser.Scene, 
-    show: boolean, 
+    scene: Phaser.Scene,
+    show: boolean,
     config = { color: 0x000000, alpha: 0.7, duration: 300 }
 ): Promise<void> {
-    
+
     // Если затемнение еще не создано, создаем его
     if (!scene.data.get('darkOverlay')) {
         // Создаем прямоугольник на весь экран (320x180)
         const overlay = scene.add.rectangle(160, 90, 320, 180, config.color, 0)
             .setOrigin(0.5)
             .setDepth(100); // Поверх всего в UI-слое
-        
+
         // Добавляем в uiLayer, чтобы gameCamera (с блюром) его не видела
         // ВАЖНО: uiLayer должен быть доступен в сцене
-        (scene as any).uiLayer.add(overlay); 
+        (scene as any).uiLayer.add(overlay);
         scene.data.set('darkOverlay', overlay);
     }
 
@@ -119,16 +177,16 @@ export function toggleDarkening(
 
 // Создание NPC
 export function createNPC(
-    scene: Phaser.Scene, 
-    x: number, 
-    y: number, 
-    npcId: string, 
-    npcData: INPCData, 
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    npcId: string,
+    npcData: INPCData,
     onInteract: (npc: NPC) => void
 ): Phaser.GameObjects.Image {
-    
+
     const npc = new NPC(npcId, npcData);
-    
+
     // Создаем спрайт
     const sprite = scene.add.image(x, y, npcData.smallImage)
         .setInteractive({ useHandCursor: true });
@@ -148,12 +206,12 @@ export function createNPC(
 
 // Удаление NPC
 export function removeNPC(
-    scene: Phaser.Scene, 
+    scene: Phaser.Scene,
     npcSprite: Phaser.GameObjects.Image
 ): Promise<void> {
     // Просто удаляем спрайт со сцены и из памяти
     npcSprite.destroy();
-    
+
     // Возвращаем промис, чтобы вызывающий код знал, когда удаление завершено
     return Promise.resolve();
 }
@@ -262,9 +320,9 @@ export class Game extends Phaser.Scene
 
         // Создаем героя
         this.hero = this.add.sprite(540, 325, 'hero');
-        this.hero.setOrigin(0.5, 1); 
+        this.hero.setOrigin(0.5, 1);
         this.hero.setFrame(0); // Статичный кадр
-        this.targetX = this.hero.x; 
+        this.targetX = this.hero.x;
         // this.hero.setScale(2.5);
 
         const book = createInteractiveObject(this, 66, 258, 'book_outline', 'book', () => {
@@ -284,7 +342,7 @@ export class Game extends Phaser.Scene
         // 1. Создаем камеры
         this.gameCamera = this.cameras.main;
         this.uiCamera = this.cameras.add(0, 0, 640, 360); // Размеры вашей игры
-        
+
         // 2. Создаем два слоя для порядка: мир и UI
         this.gameLayer = this.add.layer();
         this.uiLayer = this.add.layer();
@@ -320,7 +378,7 @@ export class Game extends Phaser.Scene
         };
 
         this.time.delayedCall(100, () => {
-            this.menu.btns.forEach((btnContainer) => {
+            this.menu.btns?.forEach((btnContainer) => {
                 // Ищем внутри контейнера объект типа Text
                 const label = btnContainer.list.find(
                     (child) => child instanceof Phaser.GameObjects.Text
@@ -358,11 +416,11 @@ export class Game extends Phaser.Scene
 
         // Если расстояние до цели больше порога — двигаемся
         if (Math.abs(distance) > threshold) {
-            
+
             // delta — это время, прошедшее с прошлого кадра (в миллисекундах).
             // Делим на 1000, чтобы получить долю секунды.
             // Это гарантирует, что скорость не будет зависеть от FPS.
-            const moveAmount = speed * (delta / 1000); 
+            const moveAmount = speed * (delta / 1000);
 
             if (distance > 0) {
                 this.hero.x += moveAmount; // Вправо
@@ -385,7 +443,7 @@ export class Game extends Phaser.Scene
         } else {
             // Дошли до цели — стоим
             this.hero.x = this.targetX;
-            
+
             if (this.hero.anims.isPlaying) {
                 this.hero.stop();
                 this.hero.setFrame(0);

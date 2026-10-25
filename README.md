@@ -1,126 +1,182 @@
-# Phaser Vite TypeScript Template
+# Greenville
 
-This is a Phaser project template that uses Vite for bundling. It supports hot-reloading for quick development workflow, includes TypeScript support and scripts to generate production-ready builds.
+Игра на [Phaser 4](https://github.com/phaserjs/phaser) с использованием [Vite](https://github.com/vitejs/vite) и TypeScript. Проект основан на шаблоне [Phaser Vite TypeScript Template](https://github.com/phaserjs/template-vite-ts). Деплой выполняется через Docker, команды обёрнуты в `Makefile`.
 
-**[This Template is also available as a JavaScript version.](https://github.com/phaserjs/template-vite)**
-
-### Versions
-
-This template has been updated for:
+## Технологии
 
 - [Phaser 4](https://github.com/phaserjs/phaser)
 - [Vite 6.3.1](https://github.com/vitejs/vite)
 - [TypeScript 5.7.2](https://github.com/microsoft/TypeScript)
+- Docker + Make (деплой)
 
-![screenshot](screenshot.png)
+## Требования
 
-## Requirements
+Для локальной разработки:
 
-[Node.js](https://nodejs.org) is required to install dependencies and run scripts via `npm`.
+- [Node.js](https://nodejs.org) и `npm`
 
-## Available Commands
+Для деплоя:
 
-| Command | Description |
-|---------|-------------|
-| `npm install` | Install project dependencies |
-| `npm run dev` | Launch a development web server |
-| `npm run build` | Create a production build in the `dist` folder |
-| `npm run dev-nolog` | Launch a development web server without sending anonymous data (see "About log.js" below) |
-| `npm run build-nolog` | Create a production build in the `dist` folder without sending anonymous data (see "About log.js" below) |
+- [Docker](https://docs.docker.com/get-docker/)
+- GNU Make
 
-## Writing Code
+## Локальная разработка
 
-After cloning the repo, run `npm install` from your project directory. Then, you can start the local development server by running `npm run dev`.
+| Команда | Описание |
+|---------|----------|
+| `npm install` | Установить зависимости |
+| `npm run dev` | Запустить сервер разработки |
+| `npm run build` | Собрать production-сборку в папку `dist` |
+| `npm run dev-nolog` | Запустить сервер разработки без отправки анонимных данных (см. «О log.js») |
+| `npm run build-nolog` | Собрать production-сборку без отправки анонимных данных (см. «О log.js») |
 
-The local development server runs on `http://localhost:8080` by default. Please see the Vite documentation if you wish to change this, or add SSL support.
+После клонирования репозитория выполните `npm install`, затем `npm run dev`. Сервер разработки по умолчанию доступен на `http://localhost:8080`. Изменения в папке `src` автоматически пересобираются, страница в браузере перезагружается сама.
 
-Once the server is running you can edit any of the files in the `src` folder. Vite will automatically recompile your code and then reload the browser.
+## Деплой
 
-## Template Project Structure
+Приложение собирается и запускается в Docker-контейнере. Параметры по умолчанию заданы в начале `Makefile`:
 
-We have provided a default project structure to get you started. This is as follows:
+| Переменная | Значение по умолчанию | Описание |
+|------------|----------------------|----------|
+| `IMAGE_NAME` | `greenville` | Имя Docker-образа |
+| `CONTAINER_NAME` | `greenville` | Имя контейнера |
+| `PORT` | `3000` | Порт, который пробрасывается с хоста в контейнер |
 
-## Template Project Structure
+### Первый запуск
 
-We have provided a default project structure to get you started:
+```bash
+git clone <repo-url>
+cd greenville
 
-| Path                         | Description                                                |
-|------------------------------|------------------------------------------------------------|
-| `index.html`                 | A basic HTML page to contain the game.                     |
-| `public/assets`              | Game sprites, audio, etc. Served directly at runtime.      |
-| `public/style.css`           | Global layout styles.                                      |
-| `src/main.ts`                | Application bootstrap.                                     |
-| `src/game`                   | Folder containing the game code.                           |
-| `src/game/main.ts`           | Game entry point: configures and starts the game.          |
-| `src/game/scenes`            | Folder with all Phaser game scenes.                        | 
+make build   # собрать образ
+make up      # запустить контейнер в фоне
+```
 
+После запуска игра доступна по адресу `http://<адрес-сервера>:3000`.
 
-## Handling Assets
+Контейнер запускается с политикой `--restart unless-stopped`, поэтому он автоматически поднимется после перезагрузки сервера или падения Docker, если его не останавливали вручную.
 
-Vite supports loading assets via JavaScript module `import` statements.
+### Обновление версии
 
-This template provides support for both embedding assets and also loading them from a static folder. To embed an asset, you can import it at the top of the JavaScript file you are using it in:
+```bash
+git pull
+make build
+make restart
+```
+
+`make restart` останавливает и удаляет старый контейнер, затем запускает новый. Он **не пересобирает** образ, поэтому сначала всегда выполняйте `make build`.
+
+### Команды Makefile
+
+| Команда | Описание |
+|---------|----------|
+| `make build` | Собрать Docker-образ `greenville` |
+| `make up` | Запустить контейнер в фоновом режиме с пробросом порта `PORT` |
+| `make down` | Остановить и удалить контейнер (если его нет, ошибки не будет) |
+| `make restart` | Выполнить `down`, затем `up` |
+| `make logs` | Показывать логи контейнера в реальном времени (выход: `Ctrl+C`) |
+| `make shell` | Открыть командную оболочку (`sh`) внутри работающего контейнера |
+| `make clean` | Остановить контейнер и удалить Docker-образ |
+
+### Смена порта
+
+Порт можно переопределить при запуске:
+
+```bash
+make up PORT=8081
+```
+
+Обратите внимание: в `Makefile` порт хоста и порт контейнера задаются одной переменной (`-p $(PORT):$(PORT)`). Если приложение внутри контейнера слушает фиксированный порт `3000`, то менять `PORT` нужно вместе с настройкой в `Dockerfile`, либо изменить маппинг на `-p $(PORT):3000`.
+
+### Проверка и диагностика
+
+```bash
+docker ps                # контейнер должен быть в статусе Up
+make logs                # логи приложения
+make shell               # зайти внутрь контейнера
+curl -I http://localhost:3000   # проверить, что сервер отвечает
+```
+
+Если `make up` падает с ошибкой, что имя контейнера уже занято, выполните `make down` или используйте `make restart`.
+
+### Полная очистка
+
+```bash
+make clean
+```
+
+Команда остановит контейнер и удалит образ. Файлы проекта не затрагиваются.
+
+### Деплой без Docker
+
+Если нужно обойтись без контейнера, соберите проект и выложите содержимое папки `dist` на любой статический веб-сервер:
+
+```bash
+npm install
+npm run build
+```
+
+Загружайте на сервер **всё** содержимое `dist`.
+
+## Структура проекта
+
+| Путь | Описание |
+|------|----------|
+| `index.html` | Базовая HTML-страница, в которой запускается игра |
+| `public/assets` | Спрайты, звук и т. д. Отдаются как статика |
+| `public/style.css` | Глобальные стили |
+| `src/main.ts` | Точка входа приложения |
+| `src/game` | Код игры |
+| `src/game/main.ts` | Конфигурация и запуск игры |
+| `src/game/scenes` | Сцены Phaser |
+| `Dockerfile` | Описание образа для деплоя |
+| `Makefile` | Команды сборки и деплоя |
+
+## Работа с ресурсами
+
+Vite поддерживает загрузку ресурсов через `import`:
 
 ```js
 import logoImg from './assets/logo.png'
 ```
 
-To load static files such as audio files, videos, etc place them into the `public/assets` folder. Then you can use this path in the Loader calls within Phaser:
+Статические файлы (аудио, видео и т. п.) кладите в `public/assets` и подключайте по пути в загрузчике Phaser:
 
 ```js
 preload ()
 {
-    //  This is an example of an imported bundled image.
-    //  Remember to import it at the top of this file
+    //  Пример импортированного (встроенного в бандл) изображения.
+    //  Не забудьте импортировать его в начале файла
     this.load.image('logo', logoImg);
 
-    //  This is an example of loading a static image
-    //  from the public/assets folder:
+    //  Пример загрузки статического изображения
+    //  из папки public/assets:
     this.load.image('background', 'assets/bg.png');
 }
 ```
 
-When you issue the `npm run build` command, all static assets are automatically copied to the `dist/assets` folder.
+При `npm run build` все статические ресурсы автоматически копируются в `dist/assets`, а затем попадают в Docker-образ при `make build`.
 
-## Deploying to Production
+## Настройка сборки
 
-After you run the `npm run build` command, your code will be built into a single bundle and saved to the `dist` folder, along with any other assets your project imported, or stored in the public assets folder.
+Для кастомизации Vite (плагины для CSS, шрифтов и т. д.) измените файл `vite/config.*.mjs` или создайте новые конфигурации и укажите их в нужных скриптах `package.json`. Подробности в [документации Vite](https://vitejs.dev/).
 
-In order to deploy your game, you will need to upload *all* of the contents of the `dist` folder to a public facing web server.
+## О log.js
 
-## Customizing the Template
+В скриптах шаблона есть файл `log.js`. Он делает один тихий API-вызов на домен `gryzor.co`, принадлежащий Phaser Studio Inc.
 
-### Vite
+Отправляются всего три значения: название шаблона, тип сборки (`dev` или `prod`) и версия Phaser. Персональные данные, информация о ваших файлах, устройстве или браузере не собираются. Вы можете убедиться в этом, прочитав `log.js`.
 
-If you want to customize your build, such as adding plugin (i.e. for loading CSS or fonts), you can modify the `vite/config.*.mjs` file for cross-project changes, or you can modify and/or create new configuration files and target them in specific npm tasks inside of `package.json`. Please see the [Vite documentation](https://vitejs.dev/) for more information.
-
-## About log.js
-
-If you inspect our node scripts you will see there is a file called `log.js`. This file makes a single silent API call to a domain called `gryzor.co`. This domain is owned by Phaser Studio Inc. The domain name is a homage to one of our favorite retro games.
-
-We send the following 3 pieces of data to this API: The name of the template being used (vue, react, etc). If the build was 'dev' or 'prod' and finally the version of Phaser being used.
-
-At no point is any personal data collected or sent. We don't know about your project files, device, browser or anything else. Feel free to inspect the `log.js` file to confirm this.
-
-Why do we do this? Because being open source means we have no visible metrics about which of our templates are being used. We work hard to maintain a large and diverse set of templates for Phaser developers and this is our small anonymous way to determine if that work is actually paying off, or not. In short, it helps us ensure we're building the tools for you.
-
-However, if you don't want to send any data, you can use these commands instead:
-
-Dev:
+Если не хотите ничего отправлять, используйте:
 
 ```bash
 npm run dev-nolog
-```
-
-Build:
-
-```bash
 npm run build-nolog
 ```
 
-Or, to disable the log entirely, simply delete the file `log.js` and remove the call to it in the `scripts` section of `package.json`:
+Чтобы отключить вызов полностью, удалите файл `log.js` и уберите его вызов из раздела `scripts` в `package.json`:
 
-Before:
+До:
 
 ```json
 "scripts": {
@@ -129,7 +185,7 @@ Before:
 },
 ```
 
-After:
+После:
 
 ```json
 "scripts": {
@@ -138,21 +194,15 @@ After:
 },
 ```
 
-Either of these will stop `log.js` from running. If you do decide to do this, please could you at least join our Discord and tell us which template you're using! Or send us a quick email. Either will be super-helpful, thank you.
+> Если сборка выполняется в Docker, проверьте, что `Dockerfile` вызывает нужный вариант скрипта (`build` или `build-nolog`).
 
-## Join the Phaser Community!
+## Сообщество Phaser
 
-We love to see what developers like you create with Phaser! It really motivates us to keep improving. So please join our community and show-off your work 😄
+- **Сайт:** [phaser.io](https://phaser.io), [Phaser Twitter](https://twitter.com/phaser_)
+- **Игры:** [#madewithphaser](https://twitter.com/search?q=%23madewithphaser&src=typed_query&f=live)
+- **Документация:** [API Docs](https://newdocs.phaser.io), [форум](https://phaser.discourse.group/), [StackOverflow](https://stackoverflow.com/questions/tagged/phaser-framework)
+- **Discord:** [discord.gg/phaser](https://discord.gg/phaser)
+- **Примеры:** [2000+ примеров](https://labs.phaser.io)
+- **Рассылка:** [Phaser World](https://phaser.io/community/newsletter)
 
-**Visit:** The [Phaser website](https://phaser.io) and follow on [Phaser Twitter](https://twitter.com/phaser_)<br />
-**Play:** Some of the amazing games [#madewithphaser](https://twitter.com/search?q=%23madewithphaser&src=typed_query&f=live)<br />
-**Learn:** [API Docs](https://newdocs.phaser.io), [Support Forum](https://phaser.discourse.group/) and [StackOverflow](https://stackoverflow.com/questions/tagged/phaser-framework)<br />
-**Discord:** Join us on [Discord](https://discord.gg/phaser)<br />
-**Code:** 2000+ [Examples](https://labs.phaser.io)<br />
-**Read:** The [Phaser World](https://phaser.io/community/newsletter) Newsletter<br />
-
-Created by [Phaser Studio](mailto:support@phaser.io). Powered by coffee, anime, pixels and love.
-
-The Phaser logo and characters are &copy; 2011 - 2025 Phaser Studio Inc.
-
-All rights reserved.
+Шаблон создан [Phaser Studio](mailto:support@phaser.io). Логотип и персонажи Phaser &copy; 2011 - 2025 Phaser Studio Inc. Все права защищены.
