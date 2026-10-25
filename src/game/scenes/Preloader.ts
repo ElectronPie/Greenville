@@ -10,7 +10,9 @@ export class Preloader extends Scene
     init ()
     {
         //  We loaded this image in our Boot Scene, so we can display it here
-        this.add.image(320, 180, 'background');
+        const bg = this.add.image(320, 180, 'background');
+        bg.enableFilters();
+        bg.filters!.external.addBlur(1, 2, 2, 0.5);
 
         //  A simple progress bar. This is the outline of the bar.
         this.add.rectangle(320, 180, 276, 8).setStrokeStyle(1, 0xffffff);

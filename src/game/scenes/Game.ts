@@ -72,6 +72,12 @@ function exitMenu(scene: Game) {
     });
 }
 
+function createAnimatedObject(scene: Phaser.Scene, x: number, y: number, animKey: string): Phaser.GameObjects.Sprite {
+    const sprite = scene.add.sprite(x, y, 'fire');
+    sprite.play(animKey); // Запускаем анимацию
+    return sprite;
+}
+
 export class Game extends Phaser.Scene
 {
     gameLayer!: Phaser.GameObjects.Layer;
@@ -90,20 +96,31 @@ export class Game extends Phaser.Scene
 
     create ()
     {
+        // Огонь
+        if (!this.anims.exists('fire_anim')) {
+            this.anims.create({
+                key: 'fire_anim',
+                frames: this.anims.generateFrameNumbers('fire', { start: 0, end: 3 }), // 4 кадра
+                frameRate: 4, // Скорость (4щщ кадров в секунду)
+                repeat: -1    // Зациклить навсегда
+            });
+        }
+
+
+
+        // 1. Создаем камеры
         this.gameCamera = this.cameras.main;
         this.uiCamera = this.cameras.add(0, 0, 640, 360); // Размеры вашей игры
         
-        // 1. Создаем два слоя для порядка: мир и UI
+        // 2. Создаем два слоя для порядка: мир и UI
         this.gameLayer = this.add.layer();
         this.uiLayer = this.add.layer();
 
-        // 2. Настраиваем главную камеру (она станет нашей gameCamera)
-        
+        // 3. Настраиваем главную камеру (она станет нашей gameCamera)
         this.background = this.add.image(320, 180, 'background');
         this.gameLayer.add(this.background);
-
-        // 3. Создаем вторую камеру для UI (кнопок)
-        
+        const fire = createAnimatedObject(this, 462, 285, 'fire_anim');
+        this.gameLayer.add(fire);
 
         // 4. Распределяем, что какая камера должна игнорировать
         // gameCamera не должна видеть элементы UI
@@ -111,25 +128,13 @@ export class Game extends Phaser.Scene
         // uiCamera не должна видеть игровой мир
         this.uiCamera.ignore(this.gameLayer);
 
-
-        // 1. Создаем слой
-        // this.gameLayer = this.add.layer();
-
-        // // 2. Создаем фон и добавляем его в слой
-        // this.background = this.add.image(320, 180, 'background').enableFilters();
-        // this.gameLayer.add(this.background);
-
-        // // 4. Включаем фильтры ДЛЯ СЛОЯ и накладываем блюр
-        // this.gameLayer.enableFilters();
-        // const menu_blur = this.gameLayer.filters!.external.addBlur(1, 2, 2, 0.5);
-
         // 5. Добавляем кнопки в uiLayer
         const btns = createButtons(this, [{text: 'Новая игра', onClick: () => exitMenu(this)}]);
         btns.forEach(btn => this.uiLayer.add(btn));
 
         // 6. Применяем фильтр размытия ТОЛЬКО к gameCamera
         // Фильтры на камерах в Phaser 4 включены по умолчанию[reference:2]
-        const blur = this.gameCamera.filters.external.addBlur(1, 2);
+        const blur = this.gameCamera.filters.external.addBlur(1, 2, 2, 0.5);
         this.menuBlur = blur;
 
         this.menu = {
@@ -150,6 +155,8 @@ export class Game extends Phaser.Scene
                 }
             });
         });
+
+
 
         // this.input.once('pointerdown', () => {
         //     this.scene.start('GameOver');
