@@ -1,4 +1,6 @@
 import * as Phaser from 'phaser';
+import { NPC } from '../npc';
+import { INPCData } from '../npc';
 
 class Menu
 {
@@ -78,6 +80,82 @@ function createAnimatedObject(scene: Phaser.Scene, x: number, y: number, animKey
     const sprite = scene.add.sprite(x, y, 'fire');
     sprite.play(animKey); // Запускаем анимацию
     return sprite;
+}
+
+// Функция для управления затемнением
+// scene - ваша сцена Game, config - настройки (цвет, прозрачность, время)
+export function toggleDarkening(
+    scene: Phaser.Scene, 
+    show: boolean, 
+    config = { color: 0x000000, alpha: 0.7, duration: 300 }
+): Promise<void> {
+    
+    // Если затемнение еще не создано, создаем его
+    if (!scene.data.get('darkOverlay')) {
+        // Создаем прямоугольник на весь экран (320x180)
+        const overlay = scene.add.rectangle(160, 90, 320, 180, config.color, 0)
+            .setOrigin(0.5)
+            .setDepth(100); // Поверх всего в UI-слое
+        
+        // Добавляем в uiLayer, чтобы gameCamera (с блюром) его не видела
+        // ВАЖНО: uiLayer должен быть доступен в сцене
+        (scene as any).uiLayer.add(overlay); 
+        scene.data.set('darkOverlay', overlay);
+    }
+
+    const overlay = scene.data.get('darkOverlay') as Phaser.GameObjects.Rectangle;
+
+    // Анимируем прозрачность (альфу)
+    return new Promise((resolve) => {
+        scene.tweens.add({
+            targets: overlay,
+            alpha: show ? config.alpha : 0,
+            duration: config.duration,
+            ease: 'Power2',
+            onComplete: () => resolve()
+        });
+    });
+}
+
+// Создание NPC
+export function createNPC(
+    scene: Phaser.Scene, 
+    x: number, 
+    y: number, 
+    npcId: string, 
+    npcData: INPCData, 
+    onInteract: (npc: NPC) => void
+): Phaser.GameObjects.Image {
+    
+    const npc = new NPC(npcId, npcData);
+    
+    // Создаем спрайт
+    const sprite = scene.add.image(x, y, npcData.smallImage)
+        .setInteractive({ useHandCursor: true });
+
+    // Добавляем эффекты наведения
+    sprite.on('pointerover', () => sprite.setTint(0xcccccc));
+    sprite.on('pointerout', () => sprite.clearTint());
+
+    // Обработка клика
+    sprite.on('pointerdown', () => {
+        // Вызываем переданную функцию (например, открытие диалога)
+        onInteract(npc);
+    });
+
+    return sprite;
+}
+
+// Удаление NPC
+export function removeNPC(
+    scene: Phaser.Scene, 
+    npcSprite: Phaser.GameObjects.Image
+): Promise<void> {
+    // Просто удаляем спрайт со сцены и из памяти
+    npcSprite.destroy();
+    
+    // Возвращаем промис, чтобы вызывающий код знал, когда удаление завершено
+    return Promise.resolve();
 }
 
 export class Game extends Phaser.Scene
