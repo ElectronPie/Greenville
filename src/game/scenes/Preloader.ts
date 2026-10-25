@@ -44,7 +44,7 @@ export class Preloader extends Scene
         //  For example, you can define global animations here, so we can use them in other scenes.
 
         const fonts = [
-            '8px "Press Start 2P"',
+            '16px "Press Start 2P"',
             '16px "Roboto"',
             '700 16px "Roboto"',   // bold is a separate load
             'italic 16px "Lora"'
