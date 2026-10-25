@@ -3,7 +3,7 @@
 
 IMAGE_NAME := greenville
 CONTAINER_NAME := greenville
-PORT := 80
+PORT := 3000
 
 build:
 	docker build -t $(IMAGE_NAME) .
@@ -12,7 +12,7 @@ up:
 	docker run -d \
 		--name $(CONTAINER_NAME) \
 		--restart unless-stopped \
-		-p $(PORT):$(PORT) \
+		-p 127.0.0.1:$(PORT):80 \
 		$(IMAGE_NAME)
 
 down:
