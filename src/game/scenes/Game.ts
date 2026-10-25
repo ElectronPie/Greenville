@@ -18,7 +18,7 @@ class Tablet
         this.tab1 = scene.add.image(410, 16, 'tab1');
         this.tab2 = scene.add.image(492, 16, 'tab1');
         this.tab3 = scene.add.image(582, 18, 'tab3');
-        this.containerObject = scene.add.container(0, 0, [this.tabletImage, this.tab1, this.tab2, this.tab3]);
+        this.containerObject = scene.add.container(0, 360, [this.tabletImage, this.tab1, this.tab2, this.tab3]);
     }
 
     hide () {
@@ -127,7 +127,7 @@ function exitMenu(scene: Game) {
             scene.uiCamera.setVisible(false);
 
             scene.menu.tablet = new Tablet(scene);
-            scene.menu.tablet!.show();
+            // scene.menu.tablet!.show();
         }
     });
 
@@ -143,21 +143,21 @@ function createAnimatedObject(scene: Phaser.Scene, x: number, y: number, animKey
 // Функция для управления затемнением
 // scene - ваша сцена Game, config - настройки (цвет, прозрачность, время)
 export function toggleDarkening(
-    scene: Phaser.Scene, 
-    show: boolean, 
+    scene: Phaser.Scene,
+    show: boolean,
     config = { color: 0x000000, alpha: 0.7, duration: 300 }
 ): Promise<void> {
-    
+
     // Если затемнение еще не создано, создаем его
     if (!scene.data.get('darkOverlay')) {
         // Создаем прямоугольник на весь экран (320x180)
         const overlay = scene.add.rectangle(160, 90, 320, 180, config.color, 0)
             .setOrigin(0.5)
             .setDepth(100); // Поверх всего в UI-слое
-        
+
         // Добавляем в uiLayer, чтобы gameCamera (с блюром) его не видела
         // ВАЖНО: uiLayer должен быть доступен в сцене
-        (scene as any).uiLayer.add(overlay); 
+        (scene as any).uiLayer.add(overlay);
         scene.data.set('darkOverlay', overlay);
     }
 
@@ -177,16 +177,16 @@ export function toggleDarkening(
 
 // Создание NPC
 export function createNPC(
-    scene: Phaser.Scene, 
-    x: number, 
-    y: number, 
-    npcId: string, 
-    npcData: INPCData, 
+    scene: Phaser.Scene,
+    x: number,
+    y: number,
+    npcId: string,
+    npcData: INPCData,
     onInteract: (npc: NPC) => void
 ): Phaser.GameObjects.Image {
-    
+
     const npc = new NPC(npcId, npcData);
-    
+
     // Создаем спрайт
     const sprite = scene.add.image(x, y, npcData.smallImage)
         .setInteractive({ useHandCursor: true });
@@ -206,12 +206,12 @@ export function createNPC(
 
 // Удаление NPC
 export function removeNPC(
-    scene: Phaser.Scene, 
+    scene: Phaser.Scene,
     npcSprite: Phaser.GameObjects.Image
 ): Promise<void> {
     // Просто удаляем спрайт со сцены и из памяти
     npcSprite.destroy();
-    
+
     // Возвращаем промис, чтобы вызывающий код знал, когда удаление завершено
     return Promise.resolve();
 }
@@ -259,9 +259,9 @@ export class Game extends Phaser.Scene
 
         // Создаем героя
         this.hero = this.add.sprite(540, 325, 'hero');
-        this.hero.setOrigin(0.5, 1); 
+        this.hero.setOrigin(0.5, 1);
         this.hero.setFrame(0); // Статичный кадр
-        this.targetX = this.hero.x; 
+        this.targetX = this.hero.x;
         // this.hero.setScale(2.5);
 
 
@@ -335,11 +335,11 @@ export class Game extends Phaser.Scene
 
         // Если расстояние до цели больше порога — двигаемся
         if (Math.abs(distance) > threshold) {
-            
+
             // delta — это время, прошедшее с прошлого кадра (в миллисекундах).
             // Делим на 1000, чтобы получить долю секунды.
             // Это гарантирует, что скорость не будет зависеть от FPS.
-            const moveAmount = speed * (delta / 1000); 
+            const moveAmount = speed * (delta / 1000);
 
             if (distance > 0) {
                 this.hero.x += moveAmount; // Вправо
@@ -362,7 +362,7 @@ export class Game extends Phaser.Scene
         } else {
             // Дошли до цели — стоим
             this.hero.x = this.targetX;
-            
+
             if (this.hero.anims.isPlaying) {
                 this.hero.stop();
                 this.hero.setFrame(0);
